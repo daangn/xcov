@@ -37,7 +37,7 @@ module Xcov
     def markdown_value
       return "" if @files.empty?
 
-      markdown = "## Current coverage for #{@name} is `#{@displayable_coverage}`\n"
+      markdown = "### Current coverage for #{@name} is `#{@displayable_coverage}`\n"
       markdown << "Files changed | - | - \n--- | --- | ---\n"
       markdown << "#{@files.map { |file| file.markdown_value }.join("")}\n---\n"
 
