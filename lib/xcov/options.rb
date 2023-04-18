@@ -77,12 +77,16 @@ module Xcov
           key: :xccov_file_direct_path,
           short_option: "-f",
           env_name: "XCOV_FILE_DIRECT_PATH",
-          description: "The path to the xccoverage/xccovreport/xcresult file to parse to generate code coverage",
+          description: "The path or array of paths to the xccoverage/xccovreport/xcresult files to parse to generate code coverage",
+          type: Array,
           optional: true,
           verify_block: proc do |value|
-            v = File.expand_path(value.to_s)
-            raise "xccoverage/xccovreport/xcresult file does not exist".red unless File.exist?(v)
-            raise "Invalid xccov file type (must be xccoverage, xccovreport, xcresult)".red unless value.end_with? "xccoverage" or value.end_with? "xccovreport" or value.end_with? "xcresult"
+            values = value.is_a?(String) ? [value] : value
+            values.each do |value|
+              v = File.expand_path(value.to_s)
+              raise "xccoverage/xccovreport/xcresult file does not exist".red unless File.exist?(v)
+              raise "Invalid xccov file type (must be xccoverage, xccovreport, xcresult)".red unless value.end_with? "xccoverage" or value.end_with? "xccovreport" or value.end_with? "xcresult"
+            end
           end
         ),
         FastlaneCore::ConfigItem.new(
@@ -100,6 +104,22 @@ module Xcov
           description: "Sets a custom path for Swift Package Manager dependencies",
           type: String,
           optional: true
+        ),
+        FastlaneCore::ConfigItem.new(
+          key: :use_system_scm,
+          env_name: "XCOV_USE_SYSTEM_SCM",
+          description: "Lets xcodebuild use system's scm configuration",
+          optional: true,
+          is_string: false,
+          default_value: false
+        ),
+        FastlaneCore::ConfigItem.new(
+          key: :is_swift_package,
+          env_name: "XCOV_IS_SWIFT_PACKAGE",
+          description: "Enables generating coverage reports for Package.swift derived projects",
+          optional: true,
+          is_string: false,
+          default_value: false
         ),
 
         # Report options
@@ -188,6 +208,13 @@ module Xcov
           description: "Enables coverage reports for .xctest targets",
           is_string: false,
           default_value: false
+        ),
+        FastlaneCore::ConfigItem.new(
+          key: :include_zero_targets,
+          env_name: "XCOV_INCLUDE_ZERO_TARGETS",
+          description: "Final report will include target even if the coverage is 0%",
+          is_string: false,
+          default_value: true
         ),
         FastlaneCore::ConfigItem.new(
           key: :exclude_targets,

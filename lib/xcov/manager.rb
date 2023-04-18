@@ -17,8 +17,10 @@ module Xcov
       Xcov.config = options
 
       # Set project options
-      FastlaneCore::Project.detect_projects(options)
-      Xcov.project = FastlaneCore::Project.new(options)
+      if !Xcov.config[:is_swift_package]
+        FastlaneCore::Project.detect_projects(options)
+        Xcov.project = FastlaneCore::Project.new(options)
+      end
 
       # Set ignored files handler
       Xcov.ignore_handler = IgnoreHandler.new
@@ -47,7 +49,7 @@ module Xcov
 
       # Find .xccoverage file
       # If no xccov direct path, use the old derived data path method
-      if xccov_file_direct_paths.nil?
+      if xccov_file_direct_paths.empty?
         extension = Xcov.config[:legacy_support] ? "xccoverage" : "xccovreport"
         
         test_logs_path = derived_data_path + "Logs/Test/"
@@ -158,6 +160,11 @@ module Xcov
       report.targets.each do |target|
         table_rows << [target.name, target.displayable_coverage]
       end
+
+      if report.targets.count > 0 
+        table_rows << ["Average Coverage", "#{"%.2f%%" % (report.coverage*100)}"]
+      end
+
       puts Terminal::Table.new({
         title: "xcov Coverage Report".green,
         rows: table_rows
@@ -198,11 +205,11 @@ module Xcov
     def xccov_file_direct_paths
       # If xccov_file_direct_path was supplied, return
       if Xcov.config[:xccov_file_direct_path].nil?
-          return nil
+          return []
       end
 
-      path = Xcov.config[:xccov_file_direct_path]
-      return [Pathname.new(path).to_s]
+      paths = Xcov.config[:xccov_file_direct_path]
+      return paths.map { |path| Pathname.new(path).to_s }
     end
 
     def process_xcresults!(xcresult_paths)
